@@ -1,0 +1,7 @@
+"SaySounds"
+{
+	"trigger string"
+	{
+		"sound_trigger"	"saysounds.soundeventname"
+	}
+}

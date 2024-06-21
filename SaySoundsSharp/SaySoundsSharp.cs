@@ -1,7 +1,9 @@
 ﻿using System.Runtime.InteropServices;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Core.Capabilities;
 using CounterStrikeSharp.API.Modules.Commands;
+using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 using CounterStrikeSharp.API.Modules.Utils;
@@ -17,14 +19,17 @@ public class SaySoundsSharp: BasePlugin {
     public override string ModuleDescription => "CounterStrikeSharp implementation of SaySounds";
 
     public override string ModuleAuthor => "faketuna";
-    
-    private readonly string tmp_soundEvtName = "soundevent.vsndevts";
+
+    private SaySoundConfig? saySoundConfig;
+
+    private FakeConVar<string> soundPath = new("saysounds_sound_path", "Sound path of say sound", "soundevents/soundevents_saysounds.vsndevts");
 
     public override void Load(bool hotReload) {
         AddCommandListener("say", CommandListener_Say);
         AddCommandListener("say_team", CommandListener_SayTeam);
+        saySoundConfig = new SaySoundConfig(this.ModuleDirectory + "/config/saysounds.txt");
         RegisterListener<Listeners.OnServerPrecacheResources>((ResourceManifest res) => {
-            res.AddResource(tmp_soundEvtName);
+            res.AddResource(soundPath.Value);
         });
     }
 
@@ -49,12 +54,16 @@ public class SaySoundsSharp: BasePlugin {
     private void playSaySound(CCSPlayerController client, string commandArgs) {
         UserSaySoundInput saySound = SaySoundUtil.processUserInput(commandArgs);
 
+        string? sound = saySoundConfig!.saySounds!.GetValueOrDefault(saySound.soundName, null);
+
+        if(sound == null)
+            return;
+
         var parameters = new Dictionary<string, float>
         {
             { "volume", saySound.volume },
             { "pitch", saySound.pitch }
         };
-        client.EmitSound(saySound.soundName, parameters);
-
+        client.EmitSound(sound, parameters);
     }
 }
