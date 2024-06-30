@@ -24,6 +24,8 @@ public class SaySoundsSharp: BasePlugin {
 
     private FakeConVar<string> soundPath = new("saysounds_sound_path", "Sound path of say sound", "soundevents/soundevents_saysounds.vsndevts");
 
+    private const string saySoundMessageFormat = "%player% played %soundname%";
+
     public override void Load(bool hotReload) {
         AddCommandListener("say", CommandListener_Say);
         AddCommandListener("say_team", CommandListener_SayTeam);
@@ -36,34 +38,54 @@ public class SaySoundsSharp: BasePlugin {
     private HookResult CommandListener_Say(CCSPlayerController? client, CommandInfo commandInfo) {
         if(client == null)
             return HookResult.Continue;
+        
+        
+        UserSaySoundInput saySound = SaySoundUtil.processUserInput(commandInfo.ArgString);
 
-        playSaySound(client, commandInfo.ArgString);
+        string? sound = saySoundConfig!.saySounds!.GetValueOrDefault(saySound.soundName, null);
 
-        return HookResult.Continue;
+        if(sound == null)
+            return HookResult.Continue;
+
+        playSaySound(client, saySound);
+
+        printSaySoundNotification(client, saySound.soundName);
+        return HookResult.Handled;
     }
 
     private HookResult CommandListener_SayTeam(CCSPlayerController? client, CommandInfo commandInfo) {
         if(client == null)
             return HookResult.Continue;
-
-        playSaySound(client, commandInfo.ArgString);
-
-        return HookResult.Continue;
-    }
-
-    private void playSaySound(CCSPlayerController client, string commandArgs) {
-        UserSaySoundInput saySound = SaySoundUtil.processUserInput(commandArgs);
+        
+        
+        UserSaySoundInput saySound = SaySoundUtil.processUserInput(commandInfo.ArgString);
 
         string? sound = saySoundConfig!.saySounds!.GetValueOrDefault(saySound.soundName, null);
 
         if(sound == null)
-            return;
+            return HookResult.Continue;
 
+        playSaySound(client, saySound);
+
+        printSaySoundNotification(client, saySound.soundName);
+        return HookResult.Handled;
+    }
+
+    private void playSaySound(CCSPlayerController client, UserSaySoundInput saySound) {
         var parameters = new Dictionary<string, float>
         {
             { "volume", saySound.volume },
             { "pitch", saySound.pitch }
         };
-        client.EmitSound(sound, parameters);
+        client.EmitSound(saySound.soundName, parameters);
+    }
+
+    private void printSaySoundNotification(CCSPlayerController client, string soundName) {
+        foreach(CCSPlayerController cl in Utilities.GetPlayers()) {
+            if(!cl.IsValid || cl.IsBot || cl.IsHLTV)
+                continue;
+            
+            cl.PrintToChat(saySoundMessageFormat.Replace("%player%", client.PlayerName).Replace("%soundname", soundName));
+        }
     }
 }
