@@ -47,7 +47,7 @@ public class SaySoundsSharp: BasePlugin {
         if(sound == null)
             return HookResult.Continue;
 
-        playSaySound(client, saySound);
+        playSaySound(client, saySound, sound);
 
         printSaySoundNotification(client, saySound.soundName);
         return HookResult.Handled;
@@ -65,26 +65,26 @@ public class SaySoundsSharp: BasePlugin {
         if(sound == null)
             return HookResult.Continue;
 
-        playSaySound(client, saySound);
+        playSaySound(client, saySound, sound);
 
         printSaySoundNotification(client, saySound.soundName);
         return HookResult.Handled;
     }
 
-    private void playSaySound(CCSPlayerController client, UserSaySoundInput saySound) {
+    private void playSaySound(CCSPlayerController client, UserSaySoundInput saySound, string soundName) {
         var parameters = new Dictionary<string, float>
         {
             { "volume", saySound.volume },
             { "pitch", saySound.pitch }
         };
-        client.EmitSound(saySound.soundName, parameters);
+        client.EmitSound(soundName, parameters);
     }
 
     private void printSaySoundNotification(CCSPlayerController client, string soundName) {
         foreach(CCSPlayerController cl in Utilities.GetPlayers()) {
             if(!cl.IsValid || cl.IsBot || cl.IsHLTV)
                 continue;
-
+            
             cl.PrintToChat(" " + saySoundMessageFormat.Replace("%player%", $"{ChatColors.LightPurple}{client.PlayerName}{ChatColors.Default}").Replace("%soundname%", $"{ChatColors.Lime}{soundName}{ChatColors.Default}"));
         }
     }
