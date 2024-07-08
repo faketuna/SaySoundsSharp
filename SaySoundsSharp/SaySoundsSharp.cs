@@ -84,8 +84,8 @@ public class SaySoundsSharp: BasePlugin {
         foreach(CCSPlayerController cl in Utilities.GetPlayers()) {
             if(!cl.IsValid || cl.IsBot || cl.IsHLTV)
                 continue;
-            
-            cl.PrintToChat(saySoundMessageFormat.Replace("%player%", client.PlayerName).Replace("%soundname", soundName));
+
+            cl.PrintToChat(" " + saySoundMessageFormat.Replace("%player%", $"{ChatColors.LightPurple}{client.PlayerName}{ChatColors.Default}").Replace("%soundname%", $"{ChatColors.Lime}{soundName}{ChatColors.Default}"));
         }
     }
 }
