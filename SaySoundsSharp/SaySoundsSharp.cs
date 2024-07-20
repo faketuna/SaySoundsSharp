@@ -20,7 +20,8 @@ public class SaySoundsSharp: BasePlugin {
 
     public override string ModuleAuthor => "faketuna";
 
-    private SaySoundConfig? saySoundConfig;
+    private SaySoundConfig saySoundConfig = default!;
+    private string CHAT_PREFIX = $" {ChatColors.Purple}[SaySounds]{ChatColors.Default}";
 
     private FakeConVar<string> soundPath = new("saysounds_sound_path", "Sound path of say sound", "soundevents/soundevents_saysounds.vsndevts");
 
@@ -33,6 +34,8 @@ public class SaySoundsSharp: BasePlugin {
         RegisterListener<Listeners.OnServerPrecacheResources>((ResourceManifest res) => {
             res.AddResource(soundPath.Value);
         });
+
+        AddCommand("css_sss", "Finds a SaySounds that contains the specified argument.", CommandSaySoundSearch);
     }
 
     private HookResult CommandListener_Say(CCSPlayerController? client, CommandInfo commandInfo) {
@@ -69,6 +72,44 @@ public class SaySoundsSharp: BasePlugin {
 
         printSaySoundNotification(client, saySound.soundName);
         return HookResult.Handled;
+    }
+
+
+    private void CommandSaySoundSearch(CCSPlayerController? client, CommandInfo commandInfo) {
+        if(client == null)
+            return;
+        
+        string arg1 = commandInfo.GetArg(1);
+
+
+        if(arg1.Equals("", StringComparison.OrdinalIgnoreCase)) {
+            client.PrintToChat($"{CHAT_PREFIX} usage: css_sss <sound name>");
+            return;
+        }
+
+        if(arg1.Length < 3) {
+            client.PrintToChat($"{CHAT_PREFIX} You need specify at least 3 characters!");
+            return;
+        }
+
+        List<string> searchResult = new ();
+
+        foreach(var sound in saySoundConfig.saySounds) {
+            if(sound.Key.Contains(arg1, StringComparison.OrdinalIgnoreCase))
+                searchResult.Add(sound.Key);
+        }
+
+
+        if(searchResult.Count() == 0) {
+            client.PrintToChat($"{CHAT_PREFIX} No sounds found with {arg1}.");
+            return;
+        }
+
+        client.PrintToChat($"{CHAT_PREFIX} {searchResult.Count()} sounds found. See client console to full list");
+        foreach(string sound in searchResult) {
+            client.PrintToConsole(sound);
+        }
+
     }
 
     private void playSaySound(CCSPlayerController client, UserSaySoundInput saySound, string soundName) {
